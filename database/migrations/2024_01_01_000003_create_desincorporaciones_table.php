@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('desincorporaciones', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->foreignBigInteger('bien_id')->constrained('bienes')->restrictOnDelete();
+            $table->foreignId('bien_id')->constrained('bienes');
             $table->string('nro_providencia', 50)->unique()->notNullable();
             $table->enum('motivo_baja', ['Obsolescencia', 'Hurto', 'Deterioro', 'Donación', 'Desecho'])->notNullable();
             $table->string('informe_tecnico_url', 255)->notNullable();

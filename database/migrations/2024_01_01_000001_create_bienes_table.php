@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('codigo_patrimonial', 50)->unique()->notNullable();
             $table->text('descripcion')->notNullable();
             $table->string('serial_fabrica', 100)->nullable();
-            $table->unsignedDecimal('valor_adquisicion', 15, 2)->notNullable();
+            $table->decimal('valor_adquisicion', 15, 2)->notNullable();
             $table->enum('estado_conservacion', ['Excelente', 'Bueno', 'Regular', 'Malo'])->notNullable();
             $table->enum('estatus', ['Activo', 'En Proceso de Desincorporación', 'Desincorporado', 'Transferido'])->default('Activo')->notNullable();
             $table->string('custodio_cedula', 15)->notNullable();
