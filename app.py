@@ -153,6 +153,8 @@ class BienesHandler(http.server.SimpleHTTPRequestHandler):
             self.send_bienes_csv(query)
         elif path == '/api/bienes/categorias':
             self.send_categorias()
+        elif path == '/api/bienes/ubicaciones':
+            self.send_ubicaciones()
         elif path.startswith('/api/bienes/'):
             parts = path.split('/')
             if len(parts) == 5 and parts[4] == 'qr' and parts[3].isdigit():
@@ -198,6 +200,12 @@ class BienesHandler(http.server.SimpleHTTPRequestHandler):
         categorias = db.execute('SELECT DISTINCT categoria FROM bienes WHERE categoria IS NOT NULL AND categoria != "" ORDER BY categoria').fetchall()
         db.close()
         self.send_json([c['categoria'] for c in categorias])
+
+    def send_ubicaciones(self):
+        db = get_db()
+        ubicaciones = db.execute('SELECT DISTINCT ubicacion FROM bienes WHERE ubicacion IS NOT NULL AND ubicacion != "" ORDER BY ubicacion').fetchall()
+        db.close()
+        self.send_json([u['ubicacion'] for u in ubicaciones])
 
     def send_bien(self, bien_id):
         db = get_db()
@@ -720,6 +728,11 @@ def build_bienes_sql(query, paginated=True):
     if categoria:
         sql += ' AND categoria = ?'
         params.append(categoria)
+
+    ubicacion = query.get('ubicacion', [''])[0]
+    if ubicacion:
+        sql += ' AND ubicacion = ?'
+        params.append(ubicacion)
 
     return sql, params
 

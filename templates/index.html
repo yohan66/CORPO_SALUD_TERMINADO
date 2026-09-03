@@ -45,6 +45,9 @@
                     <option value="En Reparación">En Reparación</option>
                     <option value="Dado de Baja">Dado de Baja</option>
                 </select>
+                <select id="filter-ubicacion">
+                    <option value="">Todas las ubicaciones</option>
+                </select>
                 <button class="btn-primary" onclick="buscarBienes()">🔍 Buscar</button>
             </div>
             <div class="table-container">
@@ -317,6 +320,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             cargarCategorias();
+            cargarUbicaciones();
             buscarBienes();
             document.getElementById('fecha_ingreso').valueAsDate = new Date();
             
@@ -356,12 +360,22 @@
                 categorias.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
+        async function cargarUbicaciones() {
+            const res = await fetch('/api/bienes/ubicaciones');
+            const ubicaciones = await res.json();
+            const filterSelect = document.getElementById('filter-ubicacion');
+            
+            filterSelect.innerHTML = '<option value="">Todas las ubicaciones</option>' + 
+                ubicaciones.map(u => `<option value="${u}">${u}</option>`).join('');
+        }
+
         async function buscarBienes() {
             const search = document.getElementById('search-input').value;
             const estado = document.getElementById('filter-estado').value;
             const categoria = document.getElementById('filter-categoria').value;
+            const ubicacion = document.getElementById('filter-ubicacion').value;
             
-            const params = new URLSearchParams({ page: currentPage, per_page: perPage, search, estado, categoria });
+            const params = new URLSearchParams({ page: currentPage, per_page: perPage, search, estado, categoria, ubicacion });
             const res = await fetch(`/api/bienes?${params}`);
             const data = await res.json();
             
@@ -650,7 +664,8 @@
             const search = document.getElementById('search-input').value;
             const estado = document.getElementById('filter-estado').value;
             const categoria = document.getElementById('filter-categoria').value;
-            window.open(`/api/bienes.csv?search=${encodeURIComponent(search)}&estado=${estado}&categoria=${categoria}`, '_blank');
+            const ubicacion = document.getElementById('filter-ubicacion').value;
+            window.open(`/api/bienes.csv?search=${encodeURIComponent(search)}&estado=${estado}&categoria=${categoria}&ubicacion=${ubicacion}`, '_blank');
         }
 
         function showMessage(elementId, message, type) {
