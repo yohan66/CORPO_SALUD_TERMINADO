@@ -31,7 +31,7 @@ O usar el script:
 ## Estructura
 
 ```
-bienes_unet/
+bienes_Copro_salud
 ├── app.py           # Servidor HTTP con API REST
 ├── CORPO_SALUD.db   # Base de datos SQLite
 ├── run.sh           # Script de ejecución
