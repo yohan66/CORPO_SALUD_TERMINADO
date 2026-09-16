@@ -563,16 +563,23 @@ class BienesHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def send_reporte_general(self, query, tipo):
-        data = build_reporte_general(tipo)
+        mes = int(query.get('mes', [0])[0])
+        anio = int(query.get('anio', [0])[0])
+        data = build_reporte_general(tipo, mes=mes, anio=anio)
         self.send_json(data)
 
     def send_reporte_general_pdf(self, query, tipo):
-        data = build_reporte_general(tipo)
+        mes = int(query.get('mes', [0])[0])
+        anio = int(query.get('anio', [0])[0])
+        data = build_reporte_general(tipo, mes=mes, anio=anio)
         titulo = 'Reporte por Departamentos' if tipo == 'departamentos' else 'Reporte por Categorías'
         subtitulo = 'Cantidad de Bienes por Departamento' if tipo == 'departamentos' else 'Cantidad de Bienes por Categoría'
         nombre_campo = 'Departamento' if tipo == 'departamentos' else 'Categoría'
         campo = 'ubicacion' if tipo == 'departamentos' else 'categoria'
         filename = f'reporte_{tipo}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
+        meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        periodo = f'{meses[mes]} {anio}' if mes and anio else 'Todos los periodos'
 
         items = data.get('items', [])
         total = data.get('total', 0)
@@ -602,7 +609,7 @@ class BienesHandler(http.server.SimpleHTTPRequestHandler):
 </head>
 <body>
     <h1>{titulo}</h1>
-    <div class="subtitle">{subtitulo} | Generado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
+    <div class="subtitle">{subtitulo} | {periodo} | Generado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
 
     <div class="summary">
         <div class="summary-card">
@@ -871,20 +878,29 @@ def build_reporte_data(query):
     }
 
 
-def build_reporte_general(tipo):
+def build_reporte_general(tipo, mes=0, anio=0):
     campo = 'ubicacion' if tipo == 'departamentos' else 'categoria'
     nombre_campo = 'departamento' if tipo == 'departamentos' else 'categoria'
 
     db = get_db()
     total_bienes = db.execute('SELECT COUNT(*) FROM bienes').fetchone()[0]
 
-    items = db.execute(f'''
+    sql = f'''
         SELECT {campo} as {nombre_campo}, COUNT(*) as cantidad
         FROM bienes
         WHERE {campo} IS NOT NULL AND {campo} != ""
-        GROUP BY {campo}
-        ORDER BY cantidad DESC
-    ''').fetchall()
+    '''
+    params = []
+
+    if mes and anio:
+        inicio_mes = f'{anio}-{mes:02d}-01'
+        fin_mes = f'{anio + 1}-01-01' if mes == 12 else f'{anio}-{mes + 1:02d}-01'
+        sql += ' AND fecha_ingreso >= ? AND fecha_ingreso < ?'
+        params.extend([inicio_mes, fin_mes])
+
+    sql += f' GROUP BY {campo} ORDER BY cantidad DESC'
+
+    items = db.execute(sql, params).fetchall()
 
     items_con_porcentaje = []
     for item in items:

@@ -309,6 +309,28 @@
         <section id="reporte-departamentos" class="tab-content">
             <h2>Reporte por Departamentos</h2>
             <div class="reporte-filters">
+                <div class="form-group">
+                    <label for="rep-dep-mes">Mes</label>
+                    <select id="rep-dep-mes">
+                        <option value="">Todos</option>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="rep-dep-anio">Año</label>
+                    <input type="number" id="rep-dep-anio" value="2026" min="2000" max="2030">
+                </div>
                 <button class="btn-primary admin-only" onclick="generarReporteDepartamentos()">📊 Generar Reporte</button>
                 <button class="btn-secondary admin-only" onclick="exportarReporteDepartamentosPDF()">📄 Exportar PDF</button>
                 <button class="btn-secondary admin-only" onclick="imprimirReporte('reporte-departamentos')">🖨️ Imprimir Reporte</button>
@@ -692,7 +714,12 @@
         }
 
         async function generarReporteDepartamentos() {
-            const res = await fetch('/api/reporte-departamentos');
+            const mes = document.getElementById('rep-dep-mes').value;
+            const anio = document.getElementById('rep-dep-anio').value;
+            const params = new URLSearchParams();
+            if (mes) params.set('mes', mes);
+            if (anio) params.set('anio', anio);
+            const res = await fetch(`/api/reporte-departamentos?${params.toString()}`);
             const data = await res.json();
 
             document.getElementById('rep-dep-total').textContent = data.total;
@@ -706,7 +733,12 @@
         }
 
         function exportarReporteDepartamentosPDF() {
-            window.open('/api/reporte-departamentos.pdf', '_blank');
+            const mes = document.getElementById('rep-dep-mes').value;
+            const anio = document.getElementById('rep-dep-anio').value;
+            const params = new URLSearchParams();
+            if (mes) params.set('mes', mes);
+            if (anio) params.set('anio', anio);
+            window.open(`/api/reporte-departamentos.pdf?${params.toString()}`, '_blank');
         }
 
         function exportarCSV() {

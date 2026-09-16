@@ -699,11 +699,10 @@ button {
         visibility: hidden;
     }
     #reporte.active, #reporte.active *,
-    #reporte-departamentos.active, #reporte-departamentos.active *,
-    #reporte-categorias.active, #reporte-categorias.active * {
+    #reporte-departamentos.active, #reporte-departamentos.active * {
         visibility: visible;
     }
-    #reporte.active, #reporte-departamentos.active, #reporte-categorias.active {
+    #reporte.active, #reporte-departamentos.active {
         position: absolute;
         left: 0;
         top: 0;
