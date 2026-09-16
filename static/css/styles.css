@@ -698,10 +698,12 @@ button {
     body * {
         visibility: hidden;
     }
-    #reporte, #reporte * {
+    #reporte.active, #reporte.active *,
+    #reporte-departamentos.active, #reporte-departamentos.active *,
+    #reporte-categorias.active, #reporte-categorias.active * {
         visibility: visible;
     }
-    #reporte {
+    #reporte.active, #reporte-departamentos.active, #reporte-categorias.active {
         position: absolute;
         left: 0;
         top: 0;

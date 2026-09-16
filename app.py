@@ -169,6 +169,14 @@ class BienesHandler(http.server.SimpleHTTPRequestHandler):
             self.send_reporte_mensual(query, guardar=True, as_csv=True)
         elif path == '/api/reporte-mensual.pdf':
             self.send_reporte_pdf(query)
+        elif path == '/api/reporte-departamentos':
+            self.send_reporte_general(query, tipo='departamentos')
+        elif path == '/api/reporte-departamentos.pdf':
+            self.send_reporte_general_pdf(query, tipo='departamentos')
+        elif path == '/api/reporte-categorias':
+            self.send_reporte_general(query, tipo='categorias')
+        elif path == '/api/reporte-categorias.pdf':
+            self.send_reporte_general_pdf(query, tipo='categorias')
         elif path == '/api/estadisticas':
             self.send_estadisticas()
         else:
@@ -558,6 +566,82 @@ class BienesHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_reporte_general(self, query, tipo):
+        data = build_reporte_general(tipo)
+        self.send_json(data)
+
+    def send_reporte_general_pdf(self, query, tipo):
+        data = build_reporte_general(tipo)
+        titulo = 'Reporte por Departamentos' if tipo == 'departamentos' else 'Reporte por Categorías'
+        subtitulo = 'Cantidad de Bienes por Departamento' if tipo == 'departamentos' else 'Cantidad de Bienes por Categoría'
+        nombre_campo = 'Departamento' if tipo == 'departamentos' else 'Categoría'
+        campo = 'ubicacion' if tipo == 'departamentos' else 'categoria'
+        filename = f'reporte_{tipo}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
+
+        items = data.get('items', [])
+        total = data.get('total', 0)
+
+        html_content = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{titulo}</title>
+    <style>
+        @page {{ size: A4; margin: 2cm; }}
+        body {{ font-family: Arial, sans-serif; font-size: 11pt; color: #333; }}
+        h1 {{ text-align: center; font-size: 18pt; margin-bottom: 5px; }}
+        .subtitle {{ text-align: center; font-size: 12pt; color: #666; margin-bottom: 20px; }}
+        .summary {{ display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }}
+        .summary-card {{ flex: 1 1 30%; background: #f5f5f5; padding: 12px; border-radius: 6px; text-align: center; border: 1px solid #ddd; }}
+        .summary-card h3 {{ margin: 0 0 5px 0; font-size: 10pt; color: #555; text-transform: uppercase; }}
+        .summary-card .value {{ font-size: 18pt; font-weight: bold; color: #2c3e50; }}
+        .section {{ margin-bottom: 25px; }}
+        .section h2 {{ font-size: 13pt; color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 5px; margin-bottom: 10px; }}
+        table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+        th, td {{ border: 1px solid #ccc; padding: 8px 10px; text-align: left; font-size: 10pt; }}
+        th {{ background: #2c3e50; color: white; font-weight: 600; }}
+        tr:nth-child(even) {{ background: #f9f9f9; }}
+        .footer {{ margin-top: 40px; text-align: center; font-size: 9pt; color: #888; }}
+    </style>
+</head>
+<body>
+    <h1>{titulo}</h1>
+    <div class="subtitle">{subtitulo} | Generado: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
+
+    <div class="summary">
+        <div class="summary-card">
+            <h3>Total Bienes</h3>
+            <div class="value">{total}</div>
+        </div>
+        <div class="summary-card">
+            <h3>Total {nombre_campo}s</h3>
+            <div class="value">{len(items)}</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>{subtitulo}</h2>
+        <table>
+            <thead><tr><th>{nombre_campo}</th><th>Cantidad de Bienes</th><th>Porcentaje</th></tr></thead>
+            <tbody>
+                {''.join(f"<tr><td>{item[campo] or '(Sin especificar)'}</td><td>{item['cantidad']}</td><td>{item['porcentaje']}%</td></tr>" for item in items)}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">Reporte generado por CORPO SALUD | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
+    <script>window.onload = function() {{ window.print(); }}</script>
+</body>
+</html>"""
+
+        body = html_content.encode('utf-8')
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Content-Disposition', f'inline; filename="{filename}"')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def send_csv(self, rows, filename):
         lines = []
         for row in rows:
@@ -788,6 +872,41 @@ def build_reporte_data(query):
         'por_categoria': [dict(c) for c in por_categoria],
         'bienes_mes': [dict(b) for b in bienes_mes],
         'movimientos_mes': [dict(m) for m in movimientos_mes]
+    }
+
+
+def build_reporte_general(tipo):
+    campo = 'ubicacion' if tipo == 'departamentos' else 'categoria'
+    nombre_campo = 'departamento' if tipo == 'departamentos' else 'categoria'
+
+    db = get_db()
+    total_bienes = db.execute('SELECT COUNT(*) FROM bienes').fetchone()[0]
+
+    items = db.execute(f'''
+        SELECT {campo} as {nombre_campo}, COUNT(*) as cantidad
+        FROM bienes
+        WHERE {campo} IS NOT NULL AND {campo} != ""
+        GROUP BY {campo}
+        ORDER BY cantidad DESC
+    ''').fetchall()
+
+    items_con_porcentaje = []
+    for item in items:
+        porcentaje = round((item['cantidad'] / total_bienes) * 100, 2) if total_bienes > 0 else 0
+        items_con_porcentaje.append({
+            nombre_campo: item[nombre_campo],
+            'cantidad': item['cantidad'],
+            'porcentaje': porcentaje
+        })
+
+    db.close()
+
+    return {
+        'tipo': tipo,
+        'total': total_bienes,
+        'total_items': len(items_con_porcentaje),
+        'items': items_con_porcentaje,
+        'fecha_generacion': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
 
 
