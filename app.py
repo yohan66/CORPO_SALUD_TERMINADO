@@ -627,7 +627,7 @@ class BienesHandler(http.server.SimpleHTTPRequestHandler):
         <table>
             <thead><tr><th>{nombre_campo}</th><th>Cantidad de Bienes</th><th>Porcentaje</th></tr></thead>
             <tbody>
-                {''.join(f"<tr><td>{item[campo] or '(Sin especificar)'}</td><td>{item['cantidad']}</td><td>{item['porcentaje']}%</td></tr>" for item in items)}
+                  {''.join(f"<tr><td>{m.get('fecha') or ''}</td><td>{m.get('tipo_movimiento') or ''}</td><td>{m.get('codigo') or ''}</td><td>{m.get('nombre') or ''}</td><td>{m.get('usuario') or ''}</td><td>{m.get('descripcion') or ''}</td></tr>" for m in data['movimientos_mes'])}
             </tbody>
         </table>
     </div>
