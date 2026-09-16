@@ -173,10 +173,6 @@ class BienesHandler(http.server.SimpleHTTPRequestHandler):
             self.send_reporte_general(query, tipo='departamentos')
         elif path == '/api/reporte-departamentos.pdf':
             self.send_reporte_general_pdf(query, tipo='departamentos')
-        elif path == '/api/reporte-categorias':
-            self.send_reporte_general(query, tipo='categorias')
-        elif path == '/api/reporte-categorias.pdf':
-            self.send_reporte_general_pdf(query, tipo='categorias')
         elif path == '/api/estadisticas':
             self.send_estadisticas()
         else:

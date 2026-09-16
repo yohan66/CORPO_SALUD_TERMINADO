@@ -28,7 +28,6 @@
         <button class="tab-btn admin-only" data-tab="eliminar">🗑️ Eliminar Bien</button>
         <button class="tab-btn" data-tab="reporte">📊 Reporte Mensual</button>
         <button class="tab-btn" data-tab="reporte-departamentos">🏢 Reporte por Departamentos</button>
-        <button class="tab-btn" data-tab="reporte-categorias">📁 Reporte por Categorías</button>
     </nav>
 
     <main class="container">
@@ -331,36 +330,6 @@
                     <table class="tabla-reporte">
                         <thead><tr><th>Departamento</th><th>Cantidad</th><th>Porcentaje</th></tr></thead>
                         <tbody id="tabla-departamentos"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Pestaña Reporte por Categorías -->
-        <section id="reporte-categorias" class="tab-content">
-            <h2>Reporte por Categorías</h2>
-            <div class="reporte-filters">
-                <button class="btn-primary admin-only" onclick="generarReporteCategorias()">📊 Generar Reporte</button>
-                <button class="btn-secondary admin-only" onclick="exportarReporteCategoriasPDF()">📄 Exportar PDF</button>
-                <button class="btn-secondary admin-only" onclick="imprimirReporte('reporte-categorias')">🖨️ Imprimir Reporte</button>
-            </div>
-            <div id="reporte-categorias-content" style="display:none;">
-                <div class="resumen-cards">
-                    <div class="card">
-                        <h3>Total Bienes</h3>
-                        <p class="big-number" id="rep-cat-total">0</p>
-                    </div>
-                    <div class="card">
-                        <h3>Total Categorías</h3>
-                        <p class="big-number blue" id="rep-cat-total-items">0</p>
-                    </div>
-                </div>
-
-                <div class="reporte-section">
-                    <h3>Bienes por Categoría</h3>
-                    <table class="tabla-reporte">
-                        <thead><tr><th>Categoría</th><th>Cantidad</th><th>Porcentaje</th></tr></thead>
-                        <tbody id="tabla-categorias-reporte"></tbody>
                     </table>
                 </div>
             </div>
@@ -714,7 +683,7 @@
         }
 
         function imprimirReporte(tabId) {
-            const reporteContent = document.getElementById(tabId === 'reporte-departamentos' ? 'reporte-departamentos-content' : tabId === 'reporte-categorias' ? 'reporte-categorias-content' : 'reporte-content');
+            const reporteContent = document.getElementById(tabId === 'reporte-departamentos' ? 'reporte-departamentos-content' : 'reporte-content');
             if (!reporteContent || reporteContent.style.display === 'none') {
                 alert('Primero genere el reporte antes de imprimir.');
                 return;
@@ -738,24 +707,6 @@
 
         function exportarReporteDepartamentosPDF() {
             window.open('/api/reporte-departamentos.pdf', '_blank');
-        }
-
-        async function generarReporteCategorias() {
-            const res = await fetch('/api/reporte-categorias');
-            const data = await res.json();
-
-            document.getElementById('rep-cat-total').textContent = data.total;
-            document.getElementById('rep-cat-total-items').textContent = data.total_items;
-
-            document.getElementById('tabla-categorias-reporte').innerHTML = data.items.map(item =>
-                `<tr><td>${item.categoria || '(Sin especificar)'}</td><td>${item.cantidad}</td><td>${item.porcentaje}%</td></tr>`
-            ).join('');
-
-            document.getElementById('reporte-categorias-content').style.display = 'block';
-        }
-
-        function exportarReporteCategoriasPDF() {
-            window.open('/api/reporte-categorias.pdf', '_blank');
         }
 
         function exportarCSV() {
