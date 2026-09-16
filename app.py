@@ -633,7 +633,6 @@ class BienesHandler(http.server.SimpleHTTPRequestHandler):
     </div>
 
     <div class="footer">Reporte generado por CORPO SALUD | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
-    <script>window.onload = function() {{ window.print(); }}</script>
 </body>
 </html>"""
 
@@ -897,6 +896,7 @@ def build_reporte_general(tipo, mes=0, anio=0):
         fin_mes = f'{anio + 1}-01-01' if mes == 12 else f'{anio}-{mes + 1:02d}-01'
         sql += ' AND fecha_ingreso >= ? AND fecha_ingreso < ?'
         params.extend([inicio_mes, fin_mes])
+        total_bienes = db.execute('SELECT COUNT(*) FROM bienes WHERE fecha_ingreso >= ? AND fecha_ingreso < ?', (inicio_mes, fin_mes)).fetchone()[0]
 
     sql += f' GROUP BY {campo} ORDER BY cantidad DESC'
 
